@@ -35,7 +35,8 @@ func view(w http.ResponseWriter, r *http.Request) {
 }
 
 func capture(w http.ResponseWriter, r *http.Request){
-	if _, err := os.Stat(fname); err == nil { 
+	pixel_number := r.FormValue("pixel")
+	if _, err    := os.Stat(fname); err == nil { 
 		//fmt.Println("Removing file",fname) 
 		os.Remove(fname)
 	} 
@@ -45,6 +46,14 @@ func capture(w http.ResponseWriter, r *http.Request){
 	
 	err     := cmd.Wait()
 	if err  != nil { log.Fatal(err) }
+	draw_line(pixel_number)
 	http.Redirect(w,r,"/view",http.StatusSeeOther)
+}
+
+
+func draw_line(){
+	file, err := os.Open(fname)
+	if err != nil {log.Panic(err)}
+	defer existingImageFile.Close()
 }
 
