@@ -15,7 +15,7 @@ import (
 )
 
 var first  = true
-var height = 1232  
+var height = 1232
 var port   = "8080"
 var imgs   = "imgs"
 var green  = color.RGBA{144, 209, 107, 1}
@@ -50,7 +50,7 @@ func main(){
 }
 
 func view(w http.ResponseWriter, r *http.Request){
-	if first{ 
+	if first{
 		if _, err := os.Stat(fname); err == nil { os.Remove(fname) }
 		first = false
 	}
@@ -63,13 +63,12 @@ func capture(w http.ResponseWriter, r *http.Request){
 	pixel           := r.FormValue("pixel")
 	limit, err_conv := strconv.Atoi(pixel)
 	if err_conv != nil { limit = 0 }
-	if _, err     := os.Stat(fname); err == nil { os.Remove(fname) } 
-	
+	if _, err     := os.Stat(fname); err == nil { os.Remove(fname) }
 	cmd     := exec.Command("raspistill", args...)
 	if err  := cmd.Start(); err != nil {log.Panic(err)}
 	err     := cmd.Wait()
 	if err  != nil { log.Fatal(err) }
-	
+
 	draw_line(limit)
 	http.Redirect(w,r,"/view",http.StatusSeeOther)
 }
