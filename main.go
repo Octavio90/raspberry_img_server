@@ -15,6 +15,7 @@ import (
 )
 
 var first  = true
+var width  = 1640
 var height = 1232
 var port   = "8080"
 var imgs   = "imgs"
@@ -60,41 +61,58 @@ func view(w http.ResponseWriter, r *http.Request){
 }
 
 func capture(w http.ResponseWriter, r *http.Request){
-	pixel           := r.FormValue("pixel")
-	limit, err_conv := strconv.Atoi(pixel)
-	if err_conv != nil { limit = 0 }
+	vpixel := r.FormValue("vpixel")
+	hpixel := r.FormValue("hpixel")
+
+	vlimit, verr := strconv.Atoi(vpixel)
+	if verr != nil { vlimit = 0 }
+
+	hlimit, herr := strconv.Atoi(hpixel)
+	if herr != nil { hlimit = 0}
+
 	if _, err     := os.Stat(fname); err == nil { os.Remove(fname) }
 	cmd     := exec.Command("raspistill", args...)
+
 	if err  := cmd.Start(); err != nil {log.Panic(err)}
 	err     := cmd.Wait()
 	if err  != nil { log.Fatal(err) }
 
-	draw_line(limit)
+	draw_line(vlimit,"height")
+	draw_line(hlimit,"width")
 	http.Redirect(w,r,"/view",http.StatusSeeOther)
 }
 
 
-func draw_line(pixel_number int){
-	fmt.Println("Drawing line at",pixel_number)
+func draw_line(pixel_number int, mode string){
+	fmt.Println("Drawing line at",pixel_number,"mode:",mode)
 	img, err := os.Open(fname)
 	if err   != nil { log.Panic(err) }
 	defer img.Close()
 
 	jpeg_img, err := jpeg.Decode(img)
-	if err        != nil { log.Panic(err) }
+	if err  != nil { log.Panic(err) }
 
 	ofile, err := os.Create(fname)
-	if err     != nil { log.Fatal(err) }
+	if err != nil { log.Fatal(err) }
 	defer ofile.Close()
 
 	n_img := NewImg(jpeg_img)
-
-	for x := 0; x < height; x += 1 {
-		n_img.Set(pixel_number-2, x, green)
-		n_img.Set(pixel_number-1, x, green)
-		n_img.Set(pixel_number  , x, green)
-		n_img.Set(pixel_number+1, x, green)
-		n_img.Set(pixel_number+2, x, green)
+        if mode == "height" {
+		for x := 0; x < height; x += 1 {
+			n_img.Set(pixel_number-2, x, green)
+			n_img.Set(pixel_number-1, x, green)
+			n_img.Set(pixel_number  , x, green)
+			n_img.Set(pixel_number+1, x, green)
+			n_img.Set(pixel_number+2, x, green)
+		}
+	}else{
+		for x := 0; x < width; x += 1{
+			n_img.Set(x, pixel_number-2, green)
+			n_img.Set(x, pixel_number-1, green)
+			n_img.Set(x, pixel_number  , green)
+			n_img.Set(x, pixel_number+1, green)
+			n_img.Set(x, pixel_number+2, green)
+		}
 	}
 	jpeg.Encode(ofile, n_img, nil)
 }
